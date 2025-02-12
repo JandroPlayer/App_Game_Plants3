@@ -133,36 +133,47 @@ class Loggin extends StatelessWidget {
                   final usuarisProvider =
                       Provider.of<UsuarisProvider>(context, listen: false);
                   await usuarisProvider.fetchUsuaris();
-                  int nouId = (usuarisProvider.usuaris.isNotEmpty)
-                      ? usuarisProvider.usuaris
-                              .map((u) => u.id)
-                              .reduce((a, b) => a > b ? a : b) +
-                          1
-                      : 1;
 
-                  Usuari nouUsuari = Usuari(
-                    id: nouId,
-                    nom: user.displayName ?? '',
-                    correu: user.email ?? '',
-                    contrasenya: '',
-                    edat: 0,
-                    nacionalitat: '',
-                    codiPostal: '',
-                    imatgePerfil: user.photoURL ?? '',
-                  );
+                  // Comprovar si l'usuari ja existeix
+                  bool usuariExisteix = usuarisProvider.usuaris
+                      .any((u) => u.correu == user.email);
 
-                  try {
-                    await usuarisProvider.addUsuari(nouUsuari);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                          content: Text('Benvingut, ${user.displayName}!')),
+                  if (!usuariExisteix) {
+                    int nouId = (usuarisProvider.usuaris.isNotEmpty)
+                        ? usuarisProvider.usuaris
+                                .map((u) => u.id)
+                                .reduce((a, b) => a > b ? a : b) +
+                            1
+                        : 1;
+
+                    Usuari nouUsuari = Usuari(
+                      id: nouId,
+                      nom: user.displayName ?? '',
+                      correu: user.email ?? '',
+                      contrasenya: '',
+                      edat: 0,
+                      nacionalitat: '',
+                      codiPostal: '',
+                      imatgePerfil: user.photoURL ?? '',
                     );
-                    Rutes.navegarHome(context, nouUsuari);
-                  } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error al crear l\'usuari')),
-                    );
+
+                    try {
+                      await usuarisProvider.addUsuari(nouUsuari);
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Error al crear l'usuari")),
+                      );
+                      return;
+                    }
                   }
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Benvingut, ${user.displayName}!')),
+                  );
+                  Rutes.navegarHome(
+                      context,
+                      usuarisProvider.usuaris
+                          .firstWhere((u) => u.correu == user.email));
                 }
               },
               child: const Text('Iniciar sessió amb Google'),
